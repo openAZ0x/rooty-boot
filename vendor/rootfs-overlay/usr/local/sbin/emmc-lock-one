@@ -1,0 +1,17 @@
+#!/bin/sh
+# Mark one Denon eMMC block device read-only and verify the kernel accepted it.
+set -eu
+
+DEV_ROOT=${EMMC_DEV_ROOT:-/dev}
+BLOCKDEV=${BLOCKDEV:-/sbin/blockdev}
+dev=${1:-}
+
+case "$dev" in
+  "$DEV_ROOT"/mmcblk0|"$DEV_ROOT"/mmcblk0p[0-9]*) ;;
+  *) echo "emmc-lock-one: refusing non-eMMC path: $dev" >&2; exit 2 ;;
+esac
+
+[ -b "$dev" ] || { echo "emmc-lock-one: not a block device: $dev" >&2; exit 1; }
+"$BLOCKDEV" --setro "$dev"
+[ "$("$BLOCKDEV" --getro "$dev")" = 1 ] \
+  || { echo "emmc-lock-one: kernel did not mark $dev read-only" >&2; exit 1; }

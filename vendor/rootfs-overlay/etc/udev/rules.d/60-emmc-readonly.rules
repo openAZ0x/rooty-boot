@@ -1,0 +1,3 @@
+# Never let the Debian boot write or automount the internal eMMC.
+ACTION=="add|change", SUBSYSTEM=="block", KERNEL=="mmcblk0", ENV{UDISKS_IGNORE}="1", ENV{UDISKS_AUTO}="0", ENV{EDISKSD_IGNORE}="1", RUN+="/usr/local/sbin/emmc-lock-one /dev/%k"
+ACTION=="add|change", SUBSYSTEM=="block", KERNEL=="mmcblk0p[0-9]*", ENV{UDISKS_IGNORE}="1", ENV{UDISKS_AUTO}="0", ENV{EDISKSD_IGNORE}="1", RUN+="/usr/local/sbin/emmc-lock-one /dev/%k"

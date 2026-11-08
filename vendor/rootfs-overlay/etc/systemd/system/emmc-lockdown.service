@@ -1,0 +1,13 @@
+[Unit]
+Description=Lock internal eMMC read-only before local filesystems
+DefaultDependencies=no
+After=systemd-udev-trigger.service
+Before=local-fs-pre.target local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/emmc-lockdown
+RemainAfterExit=yes
+
+[Install]
+WantedBy=local-fs-pre.target

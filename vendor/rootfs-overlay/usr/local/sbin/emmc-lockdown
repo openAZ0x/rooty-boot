@@ -1,0 +1,28 @@
+#!/bin/sh
+# Fail closed if eMMC is mounted, then lock the parent disk and all partitions.
+set -eu
+
+DEV_ROOT=${EMMC_DEV_ROOT:-/dev}
+LOCK_ONE=${EMMC_LOCK_ONE:-/usr/local/sbin/emmc-lock-one}
+PROC_MOUNTS=${PROC_MOUNTS:-/proc/mounts}
+
+if awk '$1 ~ /^\/dev\/mmcblk0(p[0-9]+)?$/ { found=1 } END { exit !found }' "$PROC_MOUNTS"; then
+  echo "emmc-lockdown: refusing to continue: eMMC is already mounted" >&2
+  exit 1
+fi
+
+command -v udevadm >/dev/null 2>&1 && udevadm settle --timeout=5 || true
+
+found=0
+for dev in "$DEV_ROOT/mmcblk0" "$DEV_ROOT"/mmcblk0p*; do
+  [ -b "$dev" ] || continue
+  found=1
+  "$LOCK_ONE" "$dev"
+done
+
+[ "$found" = 1 ] || echo "emmc-lockdown: no eMMC block devices present" >&2
+
+if awk '$1 ~ /^\/dev\/mmcblk0(p[0-9]+)?$/ { found=1 } END { exit !found }' "$PROC_MOUNTS"; then
+  echo "emmc-lockdown: eMMC became mounted during lockdown" >&2
+  exit 1
+fi

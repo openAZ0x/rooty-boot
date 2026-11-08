@@ -1,0 +1,27 @@
+#!/bin/sh
+# Mirror Engine OS: reset the PMU-backed U-Boot boot counter and verify zero.
+set -eu
+
+if [ -n "${BOOTCOUNT_PATH:-}" ]; then
+  candidates=$BOOTCOUNT_PATH
+else
+  candidates="/sys/bus/platform/devices/ff730000.power-management/ff730000.power-management:bootcount/bootcount
+/sys/devices/platform/ff730000.power-management/ff730000.power-management:bootcount/bootcount"
+fi
+
+path=
+tries=0
+while [ "$tries" -lt 50 ]; do
+  for candidate in $candidates; do
+    if [ -e "$candidate" ]; then path=$candidate; break 2; fi
+  done
+  tries=$((tries + 1))
+  sleep 0.1
+done
+
+[ -n "$path" ] || { echo "reset-denon-bootcount: bootcount sysfs node not found" >&2; exit 1; }
+[ -w "$path" ] || { echo "reset-denon-bootcount: not writable: $path" >&2; exit 1; }
+printf '0\n' > "$path"
+value=$(cat "$path")
+[ "$value" = 0 ] \
+  || { echo "reset-denon-bootcount: reset did not stick (read $value)" >&2; exit 1; }

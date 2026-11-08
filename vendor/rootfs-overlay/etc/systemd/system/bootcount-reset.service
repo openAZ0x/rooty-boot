@@ -1,0 +1,16 @@
+[Unit]
+Description=Reset and verify the Denon U-Boot boot counter
+DefaultDependencies=no
+After=sysfs.mount systemd-udev-trigger.service
+Before=basic.target shutdown.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/reset-denon-bootcount
+ExecStop=/usr/local/sbin/reset-denon-bootcount
+RemainAfterExit=yes
+TimeoutStartSec=10
+TimeoutStopSec=10
+
+[Install]
+WantedBy=sysinit.target
